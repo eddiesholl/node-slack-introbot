@@ -1,0 +1,11 @@
+{
+  "name": "heybot",
+  "version": "1.0.0",
+  "description": "Simple slack bot for introducing users",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "author": "Eddie Sholl",
+  "license": "ISC"
+}
