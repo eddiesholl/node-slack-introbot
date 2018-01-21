@@ -1,5 +1,10 @@
 const { IncomingWebhook, WebClient } = require('@slack/client');
 
+const renderJson = payload => {
+  console.log(JSON.stringify(payload, 0, 4));
+  return payload
+}
+
 const web = new WebClient(process.env.SLACK_TOKEN);
 const timeNotification = new IncomingWebhook(process.env.SLACK_WEBHOOK_URL);
 const currentTime = new Date().toTimeString();
@@ -10,54 +15,101 @@ const currentTime = new Date().toTimeString();
 //   console.log('Notification sent');
 // });
 
-web.users.list()
+web.users.list({ presence: true })
   .then(response => {
     // console.log('Users:')
-    // console.log(JSON.stringify(response))
+    console.log(JSON.stringify(response, 0, 4))
     return response.members.map(m => {
       return {
         id: m.id,
         name: m.name,
         tz_offset: m.tz_offset,
-        updated: m.updated
+        updated: m.updated,
+        presence: m.presence,
+        image: m.profile.image_512
       }
     })
   })
   .then(users => {
-    console.log('Users:')
-    console.log(JSON.stringify(users))
-
-    return users
-  })
-  .then(users => {
-    return web.im.list()
-      .then(channels => {
+    return Promise.all([
+      web.im.list(),
+      web.im.list()
+      // web._makeAPICall('team.profile.get')
+    ])
+      .then(([channels, team]) => {
         return {
           users,
-          channels
+          channels,
+          // team: team.profile
+          team: { fields: [] }
         }
       })
     })
-  .then(({ users, channels }) => {
-    console.dir(channels)
-    const firstId = users[0].id;
+  .then(({ users, channels, team }) => {
+    const fieldId = team.fields.find(f => f.label === 'What I do')
+
+    return users
+    // return Promise.all(users.map(u => {
+    //   return web.users.profile.get(true, u.id)
+    //     .then(renderJson)
+    //   }))
+  })
+  .then(users => {
+
+    const allOnline = users.filter(u => u.presence === 'active')
+
+    if (allOnline.length < 2) {
+      throw new Error('Not enough users online :(')
+    }
+
+    const firstOnline = allOnline[0];
+    const usersToChoose = allOnline.slice(1, 3);
+
+    const chooseActions = usersToChoose.map(u => {
+      return {
+        name: u.id,
+        text: u.name,
+        type: 'button',
+        value: u.id
+      }
+    })
+
+    const avatars = usersToChoose.map(u => {
+      return {
+        text: `<@${u.id}>`,
+        callback_id: 'wopr_game',
+        author_name: u.name,
+        author_icon: u.image,
+        actions: [{
+          name: u.id,
+          text: "Let's go",
+          type: 'button',
+          value: u.id
+        }, {
+          name: 'naa',
+          text: 'No thanks',
+          type: 'button',
+          value: 'no'
+        }]
+      }
+    })
+
     chatPayload = {
       as_user: true,
-      attachments: [
-        {
-          text: 'Attachment 1',
-          "callback_id": "wopr_game",
-          actions: [{
-            "name": "game",
-               "text": "Chess",
-               "type": "button",
-               "value": "chess"
-          }]
-        }
-      ]
+      attachments: avatars
+      // attachments: [
+      //   {
+      //     text: ':wave: Hey there! Would you like an introduction to someone else on slack?',
+      //     "callback_id": "wopr_game",
+      //     actions: chooseActions
+      //   }
+      // ]
     }
     console.dir(chatPayload);
-    return web.chat.postMessage('D8W2MDBFC', 'yo', chatPayload)
+    return web.chat.postMessage(
+      'D8W2MDBFC', // hard coded dm channel
+      ":wave: Hey there! I'm here to help recent arrivals make connections with other users.\n\nI've randomly chosen a few users on slack to get things going.",
+      chatPayload)
   })
   .catch(console.error)
 
@@ -79,9 +131,12 @@ web.users.list()
     // You should return a JSON object which describes a message to replace the original.
     // Note that the payload contains a copy of the original message (`payload.original_message`).
     const replacement = payload.original_message;
+    console.log(JSON.stringify(payload.original_message))
+    const attachmentIndex = replacement.attachments.findIndex(a => a.actions[0].name === action.name)
+    // replacement.attachments[attachmentIndex] = { text: 'Thanks!' }
     // Typically, you want to acknowledge the action and remove the interactive elements from the message
-    replacement.text =`Welcome ${payload.user.name}`;
-    delete replacement.attachments[0].actions;
+    replacement.attachments[attachmentIndex].text +=` - Thanks!`;
+    delete replacement.attachments[attachmentIndex].actions;
     return replacement;
   });
 
