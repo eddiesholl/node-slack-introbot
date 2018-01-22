@@ -1,3 +1,5 @@
+require('dotenv').config();
+
 const { IncomingWebhook, WebClient } = require('@slack/client');
 
 const renderJson = payload => {
