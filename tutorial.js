@@ -8,14 +8,6 @@ const renderJson = payload => {
 }
 
 const web = new WebClient(process.env.SLACK_TOKEN);
-const timeNotification = new IncomingWebhook(process.env.SLACK_WEBHOOK_URL);
-const currentTime = new Date().toTimeString();
-// timeNotification.send(`The current time is ${currentTime}`, (error, resp) => {
-//   if (error) {
-//     return console.error(error);
-//   }
-//   console.log('Notification sent');
-// });
 
 web.users.list({ presence: true })
   .then(response => {
@@ -88,7 +80,7 @@ web.users.list({ presence: true })
           type: 'button',
           value: u.id
         }, {
-          name: 'naa',
+          name: u.id,
           text: 'No thanks',
           type: 'button',
           value: 'no'
@@ -123,23 +115,35 @@ web.users.list({ presence: true })
   // Attach action handlers by `callback_id`
   // (See: https://api.slack.com/docs/interactive-message-field-guide#attachment_fields)
   slackMessages.action('wopr_game', (payload) => {
-    // `payload` is JSON that describes an interaction with a message.
-    console.log(`The user ${payload.user.name} in team ${payload.team.domain} pressed the welcome button`);
+    try {
+      // `payload` is JSON that describes an interaction with a message.
+      console.log(`The user ${payload.user.name} in team ${payload.team.domain} pressed the welcome button`);
 
-    // The `actions` array contains details about the specific action (button press, menu selection, etc.)
-    const action = payload.actions[0];
-    console.log(`The button had name ${action.name} and value ${action.value}`);
+      // The `actions` array contains details about the specific action (button press, menu selection, etc.)
+      const action = payload.actions[0];
+      console.log(`The button had name ${action.name} and value ${action.value}`);
 
-    // You should return a JSON object which describes a message to replace the original.
-    // Note that the payload contains a copy of the original message (`payload.original_message`).
-    const replacement = payload.original_message;
-    console.log(JSON.stringify(payload.original_message))
-    const attachmentIndex = replacement.attachments.findIndex(a => a.actions[0].name === action.name)
-    // replacement.attachments[attachmentIndex] = { text: 'Thanks!' }
-    // Typically, you want to acknowledge the action and remove the interactive elements from the message
-    replacement.attachments[attachmentIndex].text +=` - Thanks!`;
-    delete replacement.attachments[attachmentIndex].actions;
-    return replacement;
+      // You should return a JSON object which describes a message to replace the original.
+      // Note that the payload contains a copy of the original message (`payload.original_message`).
+      const replacement = payload.original_message;
+      console.log(JSON.stringify(payload.original_message, 0, 4))
+      const attachmentIndex = replacement.attachments.findIndex(a => a.actions.length && a.actions[0].name === action.name)
+      // replacement.attachments[attachmentIndex] = { text: 'Thanks!' }
+      // Typically, you want to acknowledge the action and remove the interactive elements from the message
+      console.log(attachmentIndex)
+      if (action.value === 'no') {
+        replacement.attachments[attachmentIndex].text +=` - OK, no problem`;
+      }
+      else {
+        replacement.attachments[attachmentIndex].text +=` - Great, I'll set it up for you!`;
+      }
+      delete replacement.attachments[attachmentIndex].actions;
+      return replacement;
+    }
+    catch (e) {
+      console.error('Failed to handle button click');
+      console.error(e);
+    }
   });
 
   // Start the built-in HTTP server
