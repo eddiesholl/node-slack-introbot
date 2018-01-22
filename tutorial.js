@@ -1,15 +1,17 @@
 require('dotenv').config();
+const SlackData = require('./src/slack-data');
+const SlackChat = require('./src/slack-chat');
 
-const { IncomingWebhook, WebClient } = require('@slack/client');
+const slackData = new SlackData();
+const slackChat = new SlackChat();
+
 
 const renderJson = payload => {
   console.log(JSON.stringify(payload, 0, 4));
   return payload
 }
 
-const web = new WebClient(process.env.SLACK_TOKEN);
-
-web.users.list({ presence: true })
+slackData.users({ presence: true })
   .then(response => {
     // console.log('Users:')
     console.log(JSON.stringify(response, 0, 4))
@@ -26,8 +28,8 @@ web.users.list({ presence: true })
   })
   .then(users => {
     return Promise.all([
-      web.im.list(),
-      web.im.list()
+      slackData.ims(),
+      Promise.resolve()
       // web._makeAPICall('team.profile.get')
     ])
       .then(([channels, team]) => {
@@ -100,7 +102,7 @@ web.users.list({ presence: true })
       // ]
     }
     console.dir(chatPayload);
-    return web.chat.postMessage(
+    return slackChat.post(
       'D8W2MDBFC', // hard coded dm channel
       ":wave: Hey there! I'm here to help recent arrivals make connections with other users.\n\nI've randomly chosen a few users on slack to get things going.",
       chatPayload)
@@ -127,7 +129,7 @@ web.users.list({ presence: true })
       // Note that the payload contains a copy of the original message (`payload.original_message`).
       const replacement = payload.original_message;
       console.log(JSON.stringify(payload.original_message, 0, 4))
-      const attachmentIndex = replacement.attachments.findIndex(a => a.actions.length && a.actions[0].name === action.name)
+      const attachmentIndex = replacement.attachments.findIndex(a => Array.isArray(a.actions) && a.actions[0].name === action.name)
       // replacement.attachments[attachmentIndex] = { text: 'Thanks!' }
       // Typically, you want to acknowledge the action and remove the interactive elements from the message
       console.log(attachmentIndex)
