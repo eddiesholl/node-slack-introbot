@@ -9,31 +9,26 @@ class SlackData {
 
   get(thunk, ttl, ...params) {
     const key = params.map(JSON.stringify).join('--')
-    return new Promise((resolve, reject) => {
-      this.cache.get(key, (err, value) => {
-        if (err) {
-          console.error(`Failed to cache get - ${key}`);
-          reject(err)
-        }
-        else {
-          if (value) {
-            console.log('cache hit ' + key);
-            resolve(value);
-          }
-          else {
-            console.log('Running thunk - ' + key);
-            const newValue = thunk().catch(e => {
-              console.error('Failed to run thunk for key - ' + key);
-              console.error(e);
-              reject(e);
-            })
-            this.cache.set(key, newValue, ttl);
 
-            resolve(newValue);
-          }
-        }
+    const lookupResult = this.cache.get(key)
+
+    if (lookupResult == undefined) {
+      const payload = thunk()
+        .then(thunkResult => {
+          this.cache.set(key, thunkResult, ttl)
+          return thunkResult
+        })
+        .catch(e => {
+        console.error('Failed to run thunk for key - ' + key);
+        console.error(e);
       })
-    })
+
+      this.cache.set(key, payload, ttl)
+      return payload
+    }
+    else {
+      return Promise.resolve(lookupResult)
+    }
   }
 
   users(options) {
@@ -45,7 +40,10 @@ class SlackData {
 
   ims() {
     return this.get(
-      () => this.web.im.list(),
+      () => this.web.im.list().then(ims => {
+        console.log('huh !!!!')
+        return ims
+      }),
       60,
       'ims'
     )

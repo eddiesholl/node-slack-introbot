@@ -27,12 +27,8 @@ slackData.users({ presence: true })
     })
   })
   .then(users => {
-    return Promise.all([
-      slackData.ims(),
-      Promise.resolve()
-      // web._makeAPICall('team.profile.get')
-    ])
-      .then(([channels, team]) => {
+    return slackData.ims()
+      .then(channels => {
         return {
           users,
           channels,
@@ -40,6 +36,7 @@ slackData.users({ presence: true })
           team: { fields: [] }
         }
       })
+      .catch(console.error)
     })
   .then(({ users, channels, team }) => {
     const fieldId = team.fields.find(f => f.label === 'What I do')
@@ -118,6 +115,8 @@ slackData.users({ presence: true })
   // (See: https://api.slack.com/docs/interactive-message-field-guide#attachment_fields)
   slackMessages.action('wopr_game', (payload) => {
     try {
+      console.log('getting ims')
+      slackData.ims().then(() => console.log('got ims!!!'))
       // `payload` is JSON that describes an interaction with a message.
       console.log(`The user ${payload.user.name} in team ${payload.team.domain} pressed the welcome button`);
 
