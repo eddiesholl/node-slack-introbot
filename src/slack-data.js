@@ -40,13 +40,18 @@ class SlackData {
 
   ims() {
     return this.get(
-      () => this.web.im.list().then(ims => {
-        console.log('huh !!!!')
-        return ims
-      }),
+      () => this.web.im.list().then(response => response.ims),
       60,
       'ims'
     )
+  }
+
+  imForUser(userId) {
+    return this.get(
+      () => this.ims().then(channels => channels.find(c => c.user === userId)),
+      60,
+      'imForUser',
+      userId)
   }
 }
 

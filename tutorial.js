@@ -98,11 +98,14 @@ slackData.users({ presence: true })
       //   }
       // ]
     }
-    console.dir(chatPayload);
-    return slackChat.post(
-      'D8W2MDBFC', // hard coded dm channel
-      ":wave: Hey there! I'm here to help recent arrivals make connections with other users.\n\nI've randomly chosen a few users on slack to get things going.",
-      chatPayload)
+
+    return slackData.imForUser(firstOnline.id)
+      .then(dmChannel => {
+        return slackChat.post(
+          dmChannel.id,
+          ":wave: Hey there! I'm here to help recent arrivals make connections with other users.\n\nI've randomly chosen a few users on slack to get things going.",
+          chatPayload)
+      })
   })
   .catch(console.error)
 
