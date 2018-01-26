@@ -6,11 +6,11 @@ class SlackChat {
   }
 
   post(channel, text, payload) {
-    return this.web.chat.postMessage(channel, text, payload)
+    return this.web.chat.postMessage(channel, text, payload);
   }
 
   openMulti(...users) {
-    return this.web.mpim.open(users.join(','))
+    return this.web.mpim.open(users.join(','));
   }
 }
 

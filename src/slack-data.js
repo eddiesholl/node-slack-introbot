@@ -8,26 +8,26 @@ class SlackData {
   }
 
   get(thunk, ttl, ...params) {
-    const key = params.map(JSON.stringify).join('--')
+    const key = params.map(JSON.stringify).join('--');
 
-    const lookupResult = this.cache.get(key)
+    const lookupResult = this.cache.get(key);
 
     if (lookupResult == undefined) {
       const payload = thunk()
         .then(thunkResult => {
-          this.cache.set(key, thunkResult, ttl)
-          return thunkResult
+          this.cache.set(key, thunkResult, ttl);
+          return thunkResult;
         })
         .catch(e => {
         console.error('Failed to run thunk for key - ' + key);
         console.error(e);
-      })
+      });
 
-      this.cache.set(key, payload, ttl)
-      return payload
+      this.cache.set(key, payload, ttl);
+      return payload;
     }
     else {
-      return Promise.resolve(lookupResult)
+      return Promise.resolve(lookupResult);
     }
   }
 
@@ -36,7 +36,7 @@ class SlackData {
       () => this.web.users.list(options)
         .then(response => {
           return response.members
-            .filter(m => !m.is_bot && m.name !== 'slackbot')
+            .filter(m => !m.is_bot && m.name !== 'slackbot');
             // .map(processMemberFields);
           }),
       60,
@@ -49,7 +49,7 @@ class SlackData {
       () => this.web.im.list().then(response => response.ims),
       60,
       'ims'
-    )
+    );
   }
 
   imForUser(userId) {
@@ -57,20 +57,8 @@ class SlackData {
       () => this.ims().then(channels => channels.find(c => c.user === userId)),
       60,
       'imForUser',
-      userId)
+      userId);
   }
 }
 
 module.exports = SlackData;
-
-
-const processMemberFields = m => {
-  return {
-    id: m.id,
-    name: m.name,
-    tz_offset: m.tz_offset,
-    updated: m.updated,
-    presence: m.presence,
-    image: m.profile.image_512
-  }
-}

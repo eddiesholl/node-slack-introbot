@@ -18,7 +18,7 @@ class ActionResponder {
         // Note that the payload contains a copy of the original message (`payload.original_message`).
         // This is the place to choose what to replace in the user's message
         const replacement = payload.original_message;
-        const attachmentIndex = replacement.attachments.findIndex(a => Array.isArray(a.actions) && a.actions[0].name === action.name)
+        const attachmentIndex = replacement.attachments.findIndex(a => Array.isArray(a.actions) && a.actions[0].name === action.name);
 
         // Typically, you want to acknowledge the action and remove the interactive elements from the message
         if (action.value === 'no') {
@@ -29,8 +29,8 @@ class ActionResponder {
 
           this.slackChat.openMulti(payload.user.id, action.value)
             .then(response => {
-              this.slackChat.post(response.group.id, 'Welcome to the group chat')
-            })
+              this.slackChat.post(response.group.id, 'Welcome to the group chat');
+            });
         }
         delete replacement.attachments[attachmentIndex].actions;
         return replacement;

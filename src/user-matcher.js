@@ -7,16 +7,16 @@ class UserMatcher {
   start() {
     this.slackData.users({ presence: true })
       .then(users => {
-        const allOnline = users.filter(u => u.presence === 'active')
+        const allOnline = users.filter(u => u.presence === 'active');
 
         if (allOnline.length < 2) {
-          throw new Error('Not enough users online :(')
+          throw new Error('Not enough users online :(');
         }
 
         const firstOnline = allOnline[0];
 
         return this.match(firstOnline);
-      })
+      });
   }
 
   match(targetUser) {
@@ -69,4 +69,4 @@ const createUserAttachment = u => {
   };
 };
 
-module.exports = UserMatcher
+module.exports = UserMatcher;
