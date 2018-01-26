@@ -1,8 +1,9 @@
 {
-  "name": "heybot",
+  "name": "node-slack-introbot",
   "version": "1.0.0",
   "description": "Simple slack bot for introducing users",
   "main": "index.js",
+  "repository": "github:eddiesholl/node-slack-introbot",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
     "proxy": "ngrok http 3000"
