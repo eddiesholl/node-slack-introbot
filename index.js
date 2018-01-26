@@ -14,5 +14,5 @@ const port = process.env.PORT || 3000;
 actionResponder.start(port).then(() => {
   console.log(`server listening on port ${port}`);
 
-  userMatcher.match();
+  userMatcher.start();
 });

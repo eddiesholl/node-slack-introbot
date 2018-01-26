@@ -4,19 +4,8 @@ class UserMatcher {
     this.slackChat = slackChat;
   }
 
-  match() {
+  start() {
     this.slackData.users({ presence: true })
-      .then(response => {
-        return response.members.map(processMemberFields)
-      })
-      .then(users => {
-          return {
-            users,
-            team: { fields: [] }
-          }
-        })
-      // Pick out custom fields
-      // const fieldId = team.fields.find(f => f.label === 'What I do') */
       .then(users => {
         const allOnline = users.filter(u => u.presence === 'active')
 
@@ -25,33 +14,38 @@ class UserMatcher {
         }
 
         const firstOnline = allOnline[0];
-        const usersToChoose = allOnline.slice(1, 3);
+
+        return this.match(firstOnline);
+      })
+  }
+
+  match(targetUser) {
+    return this.slackData.users({ presence: true })
+      .then(allOnline => {
+        const usersToChoose = allOnline.filter(u => u.id !== targetUser.id);
+
+        if (usersToChoose.length < 1) {
+          throw new Error('Not enough users online to connect to :(');
+        }
+
+        const candidates = usersToChoose.slice(0, 3);
+        // console.dir(candidates)
 
         const chatPayload = {
           as_user: true,
-          attachments: usersToChoose.map(createUserAttachment)
-        }
+          attachments: candidates.map(createUserAttachment)
+        };
 
-        return this.slackData.imForUser(firstOnline.id)
+        return this.slackData.imForUser(targetUser.id)
           .then(dmChannel => {
             return this.slackChat.post(
               dmChannel.id,
               ":wave: Hey there! I'm here to help recent arrivals make connections with other users.\n\nI've randomly chosen a few users on slack to get things going.",
-              chatPayload)
+              chatPayload);
           })
-      })
-      .catch(console.error)
-  }
-}
-
-const processMemberFields = m => {
-  return {
-    id: m.id,
-    name: m.name,
-    tz_offset: m.tz_offset,
-    updated: m.updated,
-    presence: m.presence,
-    image: m.profile.image_512
+          .catch(console.error);
+        })
+        .catch(console.error);
   }
 }
 
@@ -72,7 +66,7 @@ const createUserAttachment = u => {
       type: 'button',
       value: 'no'
     }]
-  }
-}
+  };
+};
 
 module.exports = UserMatcher

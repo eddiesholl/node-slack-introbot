@@ -33,9 +33,15 @@ class SlackData {
 
   users(options) {
     return this.get(
-      () => this.web.users.list(options),
+      () => this.web.users.list(options)
+        .then(response => {
+          return response.members
+            .filter(m => !m.is_bot && m.name !== 'slackbot')
+            // .map(processMemberFields);
+          }),
       60,
-      'users', options)
+      'users', options
+    );
   }
 
   ims() {
@@ -56,3 +62,15 @@ class SlackData {
 }
 
 module.exports = SlackData;
+
+
+const processMemberFields = m => {
+  return {
+    id: m.id,
+    name: m.name,
+    tz_offset: m.tz_offset,
+    updated: m.updated,
+    presence: m.presence,
+    image: m.profile.image_512
+  }
+}
