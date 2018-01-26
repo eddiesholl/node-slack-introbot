@@ -7,16 +7,7 @@ class UserMatcher {
   match() {
     this.slackData.users({ presence: true })
       .then(response => {
-        return response.members.map(m => {
-          return {
-            id: m.id,
-            name: m.name,
-            tz_offset: m.tz_offset,
-            updated: m.updated,
-            presence: m.presence,
-            image: m.profile.image_512
-          }
-        })
+        return response.members.map(processMemberFields)
       })
       .then(users => {
         return this.slackData.ims()
@@ -45,38 +36,9 @@ class UserMatcher {
         const firstOnline = allOnline[0];
         const usersToChoose = allOnline.slice(1, 3);
 
-        const chooseActions = usersToChoose.map(u => {
-          return {
-            name: u.id,
-            text: u.name,
-            type: 'button',
-            value: u.id
-          }
-        })
-
-        const avatars = usersToChoose.map(u => {
-          return {
-            text: `<@${u.id}>`,
-            callback_id: 'user_shown_possible_connections',
-            author_name: u.name,
-            author_icon: u.image,
-            actions: [{
-              name: u.id,
-              text: "Let's go",
-              type: 'button',
-              value: u.id
-            }, {
-              name: u.id,
-              text: 'No thanks',
-              type: 'button',
-              value: 'no'
-            }]
-          }
-        })
-
         const chatPayload = {
           as_user: true,
-          attachments: avatars
+          attachments: usersToChoose.map(createUserAttachment)
         }
 
         return this.slackData.imForUser(firstOnline.id)
@@ -88,6 +50,37 @@ class UserMatcher {
           })
       })
       .catch(console.error)
+  }
+}
+
+const processMemberFields = m => {
+  return {
+    id: m.id,
+    name: m.name,
+    tz_offset: m.tz_offset,
+    updated: m.updated,
+    presence: m.presence,
+    image: m.profile.image_512
+  }
+}
+
+const createUserAttachment = u => {
+  return {
+    text: `<@${u.id}>`,
+    callback_id: 'user_shown_possible_connections',
+    author_name: u.name,
+    author_icon: u.image,
+    actions: [{
+      name: u.id,
+      text: "Let's go",
+      type: 'button',
+      value: u.id
+    }, {
+      name: u.id,
+      text: 'No thanks',
+      type: 'button',
+      value: 'no'
+    }]
   }
 }
 
