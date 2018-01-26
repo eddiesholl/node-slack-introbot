@@ -1,4 +1,4 @@
-const { IncomingWebhook, WebClient } = require('@slack/client');
+const { WebClient } = require('@slack/client');
 const NodeCache = require( "node-cache" );
 
 class SlackData {

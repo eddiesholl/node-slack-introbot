@@ -10,22 +10,13 @@ class UserMatcher {
         return response.members.map(processMemberFields)
       })
       .then(users => {
-        return this.slackData.ims()
-          .then(channels => {
-            return {
-              users,
-              channels,
-              team: { fields: [] }
-            }
-          })
-          .catch(console.error)
+          return {
+            users,
+            team: { fields: [] }
+          }
         })
-      .then(({ users, channels, team }) => {
-        // Pick out custom fields
-        const fieldId = team.fields.find(f => f.label === 'What I do')
-
-        return users
-      })
+      // Pick out custom fields
+      // const fieldId = team.fields.find(f => f.label === 'What I do') */
       .then(users => {
         const allOnline = users.filter(u => u.presence === 'active')
 
