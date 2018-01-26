@@ -13,8 +13,6 @@ const renderJson = payload => {
 
 slackData.users({ presence: true })
   .then(response => {
-    // console.log('Users:')
-    console.log(JSON.stringify(response, 0, 4))
     return response.members.map(m => {
       return {
         id: m.id,
@@ -32,23 +30,18 @@ slackData.users({ presence: true })
         return {
           users,
           channels,
-          // team: team.profile
           team: { fields: [] }
         }
       })
       .catch(console.error)
     })
   .then(({ users, channels, team }) => {
+    // Pick out custom fields
     const fieldId = team.fields.find(f => f.label === 'What I do')
 
     return users
-    // return Promise.all(users.map(u => {
-    //   return web.users.profile.get(true, u.id)
-    //     .then(renderJson)
-    //   }))
   })
   .then(users => {
-
     const allOnline = users.filter(u => u.presence === 'active')
 
     if (allOnline.length < 2) {
@@ -70,7 +63,7 @@ slackData.users({ presence: true })
     const avatars = usersToChoose.map(u => {
       return {
         text: `<@${u.id}>`,
-        callback_id: 'wopr_game',
+        callback_id: 'user_shown_possible_connections',
         author_name: u.name,
         author_icon: u.image,
         actions: [{
@@ -90,13 +83,6 @@ slackData.users({ presence: true })
     chatPayload = {
       as_user: true,
       attachments: avatars
-      // attachments: [
-      //   {
-      //     text: ':wave: Hey there! Would you like an introduction to someone else on slack?',
-      //     "callback_id": "wopr_game",
-      //     actions: chooseActions
-      //   }
-      // ]
     }
 
     return slackData.imForUser(firstOnline.id)
@@ -111,28 +97,21 @@ slackData.users({ presence: true })
 
   const { createMessageAdapter } = require('@slack/interactive-messages');
 
-  // Initialize adapter using verification token from environment variables
   const slackMessages = createMessageAdapter(process.env.SLACK_VERIFICATION_TOKEN);
-
-  // Attach action handlers by `callback_id`
-  // (See: https://api.slack.com/docs/interactive-message-field-guide#attachment_fields)
-  slackMessages.action('wopr_game', (payload) => {
+  slackMessages.action('user_shown_possible_connections', (payload) => {
     try {
-      // `payload` is JSON that describes an interaction with a message.
       console.log(`The user ${payload.user.name} in team ${payload.team.domain} pressed the welcome button`);
 
-      // The `actions` array contains details about the specific action (button press, menu selection, etc.)
       const action = payload.actions[0];
       console.log(`The button had name ${action.name} and value ${action.value}`);
 
-      // You should return a JSON object which describes a message to replace the original.
+      // Prepare the response for return the client's chat
       // Note that the payload contains a copy of the original message (`payload.original_message`).
+      // This is the place to choose what to replace in the user's message
       const replacement = payload.original_message;
-      console.log(JSON.stringify(payload.original_message, 0, 4))
       const attachmentIndex = replacement.attachments.findIndex(a => Array.isArray(a.actions) && a.actions[0].name === action.name)
-      // replacement.attachments[attachmentIndex] = { text: 'Thanks!' }
+
       // Typically, you want to acknowledge the action and remove the interactive elements from the message
-      console.log(attachmentIndex)
       if (action.value === 'no') {
         replacement.attachments[attachmentIndex].text +=` - OK, no problem`;
       }
